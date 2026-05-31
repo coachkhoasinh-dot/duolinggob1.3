@@ -20,7 +20,8 @@
             max-width: 480px;
             margin: 0 auto;
             background-color: #ffffff;
-            height: 100dvh; /* Tối ưu cho Mobile: Tự chỉnh theo thanh công cụ trình duyệt */
+            height: 100vh; /* Fallback an toàn cho trình duyệt cũ */
+            height: 100dvh; /* Tối ưu cho Mobile: Tự chỉnh theo thanh công cụ */
             box-shadow: 0 0 20px rgba(0,0,0,0.05);
             position: relative;
             overflow: hidden;
@@ -203,6 +204,24 @@
                 </button>
             </div>
         </div>
+
+        <!-- Cảnh báo trình duyệt nhúng (Zalo/Messenger) -->
+        <div id="browser-warning-modal" class="absolute inset-0 bg-black/60 z-[200] flex justify-center items-center hidden px-4 transition-opacity">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 w-full max-w-[320px] text-center shadow-2xl transform transition-transform scale-95 transition-all duration-200" id="warning-content">
+                <div class="w-16 h-16 bg-[#ffc800] rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-yellow-100">
+                    <i class="fa-solid fa-triangle-exclamation text-white text-3xl"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-black text-gray-800 mb-2">Chú ý trình duyệt!</h3>
+                <p class="text-gray-500 mb-6 text-[14px] sm:text-[15px] leading-relaxed font-semibold">
+                    Bạn đang mở app trong Zalo/Messenger. Trình duyệt này <b class="text-[#ff4b4b]">chặn tính năng âm thanh</b>.<br><br>
+                    Vui lòng bấm dấu 3 chấm góc phải <i class="fa-solid fa-ellipsis-vertical mx-1"></i> và chọn <b class="text-[#1cb0f6]">"Mở bằng trình duyệt"</b> (Chrome/Safari) để nghe được phát âm!
+                </p>
+                <button onclick="closeWarningModal()" class="w-full py-3 sm:py-3.5 rounded-2xl bg-[#58cc02] text-white font-black text-base sm:text-lg btn-3d hover:brightness-110 active:border-b-0 active:translate-y-[4px]">
+                    TÔI ĐÃ HIỂU
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -348,24 +367,39 @@
         let userAnswerBank = [];
         let correctAnswer = "";
 
-        // Tối ưu giọng đọc AI
+        // Tối ưu giọng đọc AI 
         function setupVoices() {
-            let voices = window.speechSynthesis.getVoices();
-            if (voices.length > 0) {
-                // Ưu tiên các giọng hay: Google US, Natural (Edge), Siri
-                selectedVoice = voices.find(v => v.name.includes('Google US English')) ||
-                                voices.find(v => v.name.includes('Natural') && v.lang.includes('en')) ||
-                                voices.find(v => v.lang === 'en-US') || 
-                                voices.find(v => v.lang.includes('en'));
+            // Kiểm tra xem trình duyệt có hỗ trợ âm thanh không
+            if (!('speechSynthesis' in window)) return; 
+            
+            try {
+                let voices = window.speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    selectedVoice = voices.find(v => v.name.includes('Google US English')) ||
+                                    voices.find(v => v.name.includes('Natural') && v.lang.includes('en')) ||
+                                    voices.find(v => v.lang === 'en-US') || 
+                                    voices.find(v => v.lang.includes('en'));
+                }
+            } catch(e) {
+                console.warn("Trình duyệt không cho phép lấy giọng đọc.");
             }
         }
-        window.speechSynthesis.onvoiceschanged = setupVoices;
+        
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = setupVoices;
+        }
 
         function renderMap() {
             const container = document.getElementById('map-container');
             container.innerHTML = '';
             
-            const completedLessons = JSON.parse(localStorage.getItem('b1Completed')) || [];
+            let completedLessons = [];
+            try {
+                // Khắc phục lỗi nếu Zalo chặn LocalStorage
+                completedLessons = JSON.parse(localStorage.getItem('b1Completed')) || [];
+            } catch (e) {
+                console.warn("Không thể truy cập bộ nhớ, bỏ qua lưu bài.");
+            }
             
             // Đường uốn lượn zigzag cho map
             const offsets = ['translate-x-0', 'translate-x-6', 'translate-x-12', 'translate-x-6', 'translate-x-0', '-translate-x-6', '-translate-x-12', '-translate-x-6'];
@@ -378,7 +412,7 @@
                 const nodeWrapper = document.createElement('div');
                 nodeWrapper.className = `flex justify-center mb-8 w-full`;
                 
-                // Container nhóm Nút tròn + Nhãn tên để cùng di chuyển theo đường zigzag
+                // Container nhóm Nút tròn + Nhãn tên để cùng di chuyển zigzag
                 const itemGroup = document.createElement('div');
                 itemGroup.className = `flex flex-col items-center transform transition-transform ${transformClass}`;
                 
@@ -441,17 +475,39 @@
             }, 10);
         }
 
-        // --- HÀM CLOSE LESSON MỚI ĐƯỢC THÊM VÀO ĐÂY ---
+        // --- HỆ THỐNG CẢNH BÁO TRÌNH DUYỆT ---
+        function checkInAppBrowser() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            // Kiểm tra Zalo, Facebook, Instagram
+            if (ua.includes("Zalo") || ua.includes("FBAN") || ua.includes("FBAV") || ua.includes("Instagram")) {
+                const modal = document.getElementById('browser-warning-modal');
+                const content = document.getElementById('warning-content');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                }, 10);
+            }
+        }
+
+        function closeWarningModal() {
+            const modal = document.getElementById('browser-warning-modal');
+            const content = document.getElementById('warning-content');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
         function closeLesson() {
             const modal = document.getElementById('lesson-modal');
-            
-            // Kéo modal xuống dưới
             modal.classList.add('translate-y-full');
             
-            // Dừng mọi giọng đọc đang phát
-            window.speechSynthesis.cancel();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
             
-            // Đợi CSS transition chạy xong (300ms) rồi mới set hidden
             setTimeout(() => {
                 modal.classList.add('hidden');
             }, 300);
@@ -498,6 +554,7 @@
         }
 
         function speakWord(wordText) {
+            if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
             const cleanWord = wordText.replace(/[.,;!?]/g, '');
             const utterance = new SpeechSynthesisUtterance(cleanWord);
@@ -508,6 +565,7 @@
         }
 
         function speakFull() {
+            if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
             const text = lessonsData[currentLessonIndex].english;
             const utterance = new SpeechSynthesisUtterance(text);
@@ -599,11 +657,13 @@
 
             if (userStr === correctStr) {
                 // ĐÚNG
-                const utterance = new SpeechSynthesisUtterance(correctAnswer);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.9;
-                if(selectedVoice) utterance.voice = selectedVoice;
-                window.speechSynthesis.speak(utterance);
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(correctAnswer);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.9;
+                    if(selectedVoice) utterance.voice = selectedVoice;
+                    window.speechSynthesis.speak(utterance);
+                }
                 
                 // Đổi nút check thành chuyển câu tiếp theo
                 const btnCheck = document.getElementById('btn-check');
@@ -631,24 +691,33 @@
         }
 
         function completeLesson() {
-            window.speechSynthesis.cancel();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
             
-            let completed = JSON.parse(localStorage.getItem('b1Completed')) || [];
+            let completed = [];
+            try {
+                completed = JSON.parse(localStorage.getItem('b1Completed')) || [];
+            } catch (e) {}
+            
             const lessonId = lessonsData[currentLessonIndex].id;
             
             if (!completed.includes(lessonId)) {
                 completed.push(lessonId);
-                localStorage.setItem('b1Completed', JSON.stringify(completed));
+                try {
+                    localStorage.setItem('b1Completed', JSON.stringify(completed));
+                } catch(e) {}
             }
             
-            closeLesson(); // Đã sử dụng hàm closeLesson mới
+            closeLesson(); 
             renderMap();
         }
 
-        // Khởi tạo ứng dụng
+        // Khởi tạo ứng dụng với vòng vây an toàn
         window.onload = () => {
-            setupVoices();
-            renderMap();
+            try { checkInAppBrowser(); } catch (e) {}
+            try { setupVoices(); } catch (e) {}
+            try { renderMap(); } catch (e) { console.error("Lỗi vẽ map:", e); }
         };
     </script>
 </body>
