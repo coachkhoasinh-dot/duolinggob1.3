@@ -85,6 +85,14 @@
             width: 0px;
             background: transparent;
         }
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 <body>
@@ -113,24 +121,23 @@
         <!-- Modal Bài học (Khởi đầu bị ẩn) -->
         <div id="lesson-modal" class="absolute inset-0 bg-white z-[100] flex flex-col hidden transition-transform transform translate-y-full duration-300">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between p-3 sm:p-4 border-b-2 border-gray-200 shrink-0">
-                <button onclick="closeLesson()" class="text-gray-400 hover:text-gray-600 text-2xl px-2 active:scale-90 transition-transform">
+            <div class="flex items-center justify-between p-3 border-b-2 border-gray-200 shrink-0 gap-2">
+                <button onclick="closeLesson()" class="text-gray-400 hover:text-gray-600 text-2xl px-1 active:scale-90 transition-transform">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 
-                <!-- Tabs Chuyển đổi tính năng -->
-                <div class="flex bg-gray-100 p-1 rounded-xl">
-                    <button onclick="switchTab('learn')" id="tab-learn" class="px-4 py-1.5 rounded-lg font-bold text-sm sm:text-base bg-white shadow text-[#1cb0f6] transition-colors">ĐỌC & NGHE</button>
-                    <button onclick="switchTab('practice')" id="tab-practice" class="px-4 py-1.5 rounded-lg font-bold text-sm sm:text-base text-gray-400 hover:text-gray-600 transition-colors">LUYỆN CÂU</button>
+                <!-- Tabs Chuyển đổi tính năng (3 Tabs) -->
+                <div class="flex bg-gray-100 p-1 rounded-xl w-full justify-between sm:justify-start overflow-x-auto no-scrollbar gap-1">
+                    <button onclick="switchTab('learn')" id="tab-learn" class="px-3 sm:px-4 py-1.5 rounded-lg font-bold text-[12px] sm:text-sm bg-white shadow text-[#1cb0f6] transition-colors whitespace-nowrap">ĐỌC</button>
+                    <button onclick="switchTab('quick')" id="tab-quick" class="px-3 sm:px-4 py-1.5 rounded-lg font-bold text-[12px] sm:text-sm text-gray-400 hover:text-gray-600 transition-colors whitespace-nowrap">HỌC NHANH</button>
+                    <button onclick="switchTab('practice')" id="tab-practice" class="px-3 sm:px-4 py-1.5 rounded-lg font-bold text-[12px] sm:text-sm text-gray-400 hover:text-gray-600 transition-colors whitespace-nowrap">LUYỆN CÂU</button>
                 </div>
-                
-                <div class="w-8"></div> <!-- Spacer -->
             </div>
 
             <!-- Scrollable Body của Modal -->
-            <div class="flex-grow overflow-y-auto p-4 sm:p-6 bg-white">
+            <div class="flex-grow overflow-y-auto p-4 sm:p-6 bg-white relative">
                 
-                <!-- VIEW 1: ĐỌC & NGHE -->
+                <!-- VIEW 1: ĐỌC & NGHE TỔNG THỂ -->
                 <div id="view-learn" class="flex flex-col h-full">
                     <h2 class="text-xl sm:text-2xl font-black text-gray-800 mb-2" id="lesson-title">Chủ đề</h2>
                     
@@ -138,18 +145,17 @@
                     <div id="lesson-prompts" class="mb-4 text-gray-500 text-[13px] sm:text-[15px] font-bold"></div>
                     
                     <div class="flex items-start w-full">
-                        <!-- Nhân vật cú Duolingo (mô phỏng) -->
+                        <!-- Nhân vật cú Duolingo -->
                         <div class="w-12 h-12 sm:w-16 sm:h-16 bg-[#58cc02] rounded-full flex items-center justify-center flex-shrink-0 border-b-4 border-[#58a700] mr-2 sm:mr-3 mt-2 sm:mt-4">
                             <i class="fa-solid fa-kiwi-bird text-white text-2xl sm:text-3xl"></i>
                         </div>
                         
                         <!-- Khung hội thoại -->
                         <div class="bg-white border-2 border-gray-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 relative flex-grow shadow-sm">
-                            <!-- Tam giác chỉ vào cú -->
                             <div class="absolute w-3 h-3 sm:w-4 sm:h-4 bg-white border-l-2 border-b-2 border-gray-200 transform -rotate-45 -left-[7px] sm:-left-[10px] top-6 sm:top-8"></div>
                             
                             <div class="text-[10px] sm:text-xs text-[#1cb0f6] font-bold mb-2 sm:mb-3 flex items-center bg-blue-50 w-fit px-2 py-1 rounded-lg">
-                                <i class="fa-solid fa-hand-pointer mr-2 animate-bounce"></i> Chạm vào từ để nghe
+                                <i class="fa-solid fa-hand-pointer mr-2 animate-bounce"></i> Chạm vào từ để xem nghĩa
                             </div>
                             
                             <div id="lesson-english" class="text-base sm:text-xl leading-relaxed text-gray-800 font-bold mb-4 flex flex-wrap gap-x-1 gap-y-1">
@@ -162,7 +168,7 @@
                                     <i class="fa-solid fa-volume-high"></i>
                                 </button>
                                 <button onclick="toggleTranslation()" class="px-4 h-10 sm:h-12 rounded-xl bg-gray-100 text-gray-500 font-bold flex items-center justify-center btn-3d shadow-sm hover:bg-gray-200 text-sm sm:text-base">
-                                    <i class="fa-solid fa-language mr-2"></i> Dịch
+                                    <i class="fa-solid fa-language mr-2"></i> Dịch Toàn Bộ
                                 </button>
                             </div>
                         </div>
@@ -173,7 +179,18 @@
                     </div>
                 </div>
 
-                <!-- VIEW 2: LUYỆN CÂU (Sắp xếp từ) -->
+                <!-- VIEW 2: HỌC NHANH (Chia nhỏ từng câu) -->
+                <div id="view-quick" class="hidden flex-col h-full">
+                    <h2 class="text-xl sm:text-2xl font-black text-gray-800 mb-4">Học Từng Câu</h2>
+                    <div class="text-[13px] sm:text-sm text-gray-500 font-bold mb-4">
+                        <i class="fa-solid fa-bolt text-[#ffc800] mr-1"></i> Bấm loa để nghe từng câu riêng biệt
+                    </div>
+                    <div id="quick-learn-content" class="space-y-3 pb-6">
+                        <!-- Nội dung sẽ được sinh tự động -->
+                    </div>
+                </div>
+
+                <!-- VIEW 3: LUYỆN CÂU (Sắp xếp từ) -->
                 <div id="view-practice" class="hidden flex-col h-full">
                     <h2 class="text-xl sm:text-2xl font-black text-gray-800 mb-6">Sắp xếp thành câu đúng</h2>
                     
@@ -182,12 +199,16 @@
                     </div>
 
                     <!-- Khu vực người dùng kéo/thả/click từ -->
-                    <div id="practice-answer-box" class="min-h-[60px] sm:min-h-[80px] w-full border-b-2 border-gray-300 mb-6 flex flex-wrap gap-2 items-start pb-2">
+                    <div id="practice-answer-box" class="min-h-[60px] sm:min-h-[80px] w-full border-b-2 border-gray-300 mb-2 flex flex-wrap gap-2 items-start pb-2 transition-all duration-300 relative z-10">
                         <!-- Lựa chọn sẽ xuất hiện ở đây -->
                     </div>
 
+                    <!-- Lời khen ngợi khi làm đúng -->
+                    <div id="practice-feedback" class="h-8 flex items-center justify-center font-black text-lg sm:text-xl transition-transform duration-300 transform scale-0 mb-4">
+                    </div>
+
                     <!-- Kho từ lộn xộn -->
-                    <div id="practice-word-bank" class="flex flex-wrap gap-2 justify-center mt-auto pb-4">
+                    <div id="practice-word-bank" class="flex flex-wrap gap-2 justify-center mt-auto pb-4 relative z-10">
                         <!-- Các từ sẽ được render ngẫu nhiên -->
                     </div>
                 </div>
@@ -195,7 +216,7 @@
             </div>
 
             <!-- Modal Footer (Nút hoàn thành / Kiểm tra) -->
-            <div class="p-4 border-t-2 border-gray-200 bg-white shrink-0">
+            <div class="p-4 border-t-2 border-gray-200 bg-white shrink-0 relative z-50">
                 <button id="btn-check" onclick="checkPractice()" class="w-full py-3 sm:py-4 rounded-2xl bg-gray-300 text-gray-500 font-black text-base sm:text-lg hidden btn-3d" disabled>
                     KIỂM TRA
                 </button>
@@ -222,17 +243,24 @@
             </div>
         </div>
 
+        <!-- Tooltip tra từ vựng Mini (ĐÃ SỬA VỊ TRÍ) -->
+        <div id="word-tooltip" class="absolute z-[200] bg-gray-800 text-white text-[13px] sm:text-[14px] font-bold px-3 py-1.5 rounded-lg shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-8px] hidden opacity-0 transition-opacity duration-200">
+            <span id="tooltip-text">Nghĩa</span>
+            <div class="absolute w-3 h-3 bg-gray-800 transform rotate-45 left-1/2 -ml-1.5 -bottom-1"></div>
+        </div>
+
     </div>
 
     <script>
-        // Dữ liệu 16 bài học từ file Word (đã gộp theo yêu cầu)
+        // Dữ liệu 16 bài học từ file Word
         const lessonsData = [
             {
                 id: 1,
                 title: "Topic 1 & 20",
                 prompts: "- Describe a place you visited recently.<br>- Describe a trip to the zoo you had recently.",
                 english: "I want to talk about a trip to Hanoi Zoo. I went there by motorbike with my friends. I spent a day walking around the zoo to see many different species. I really enjoyed taking photos of monkeys and tigers there. I liked this trip because seeing real animals is very interesting. It was a very relaxing and meaningful trip for me.",
-                vietnamese: "Tôi muốn nói về chuyến đi đến Sở thú Hà Nội. Tôi đã đến đó bằng xe máy với những người bạn. Tôi đã dành một ngày đi dạo quanh sở thú để xem nhiều loài khác nhau. Tôi thực sự thích việc chụp ảnh những chú khỉ và hổ ở đó. Tôi thích chuyến đi này vì được tận mắt nhìn thấy các loài động vật rất thú vị Đó là một chuyến đi rất thư giãn và ý nghĩa đối với tôi.",
+                // Đã thêm dấu chấm vào bản dịch để ngắt câu chuẩn xác
+                vietnamese: "Tôi muốn nói về chuyến đi đến Sở thú Hà Nội. Tôi đã đến đó bằng xe máy với những người bạn. Tôi đã dành một ngày đi dạo quanh sở thú để xem nhiều loài khác nhau. Tôi thực sự thích việc chụp ảnh những chú khỉ và hổ ở đó. Tôi thích chuyến đi này vì được tận mắt nhìn thấy các loài động vật rất thú vị. Đó là một chuyến đi rất thư giãn và ý nghĩa đối với tôi.",
                 colorClass: "bg-[#ff4b4b]", icon: "fa-map-location-dot"
             },
             {
@@ -272,7 +300,7 @@
                 title: "Topic 8",
                 prompts: "- Describe a thing that you bought recently.",
                 english: "I bought a new T-shirt. I bought it at a clothing shop in the town center. I bought it because I liked the color and the design; it is very comfortable to wear to hangout.",
-                vietnamese: "- Bạn mua gì: Tôi vừa mua một chiếc áo phông mới.<br>- Mua ở đâu: Tôi mua nó tại một cửa hàng quần áo ở trung tâm thị trấn.<br>- Tại sao mua: Tôi mua vì tôi thích màu sắc và kiểu dáng của nó; nó rất thoải mái để mặc đi chơi.",
+                vietnamese: "- Bạn mua gì: Tôi vừa mua một chiếc áo phông mới.<br>- Mua ở đâu: Tôi mua nó tại cửa hàng quần áo ở trung tâm thị trấn.<br>- Tại sao mua: Tôi mua vì tôi thích màu sắc và kiểu dáng; nó rất thoải mái để mặc đi chơi.",
                 colorClass: "bg-[#ff4b4b]", icon: "fa-shirt"
             },
             {
@@ -288,7 +316,7 @@
                 title: "Topic 10",
                 prompts: "- Describe a website that you often visit.",
                 english: "The website is YouTube. I often watch English learning videos and rap music videos of Den Vau. I like it because it is free and very helpful.",
-                vietnamese: "- Tên trang web: Trang web là YouTube.<br>- Thường xem gì: Tôi thường xem video học tiếng Anh và video nhạc rap của Đen Vâu.<br>- Thích điều gì: Tôi thích vì nó miễn phí và rất hữu ích.",
+                vietnamese: "- Tên trang web: Trang web là YouTube.<br>- Thường xem gì: Tôi thường xem video học tiếng Anh và nhạc rap của Đen Vâu.<br>- Thích điều gì: Tôi thích vì nó miễn phí và rất hữu ích.",
                 colorClass: "bg-[#1cb0f6]", icon: "fa-globe"
             },
             {
@@ -296,7 +324,7 @@
                 title: "Topic 11 & 13",
                 prompts: "- Describe a famous historic site/museum in your country.",
                 english: "I want to talk about Hoa Lo Prison in Hanoi. At this place, you can see old rooms, metal chains, and many photos of Vietnamese heroes from the past. It is very famous because it tells the story of how Vietnamese people fought for freedom. I like this place because it is very moving and helps me learn about my country's history.",
-                vietnamese: "Tôi muốn nói về Nhà tù Hỏa Lò ở Hà Nội. Tại nơi này, bạn có thể nhìn thấy những căn phòng cũ, dây xích kim loại và nhiều bức ảnh của các anh hùng Việt Nam trong quá khứ. Nó rất nổi tiếng vì kể câu chuyện về cách người dân Việt Nam đấu tranh giành tự do. Tôi thích nơi này vì nó rất cảm động và giúp tôi tìm hiểu về lịch sử đất nước mình.",
+                vietnamese: "Tôi muốn nói về Nhà tù Hỏa Lò ở Hà Nội. Tại nơi này, bạn có thể nhìn thấy những căn phòng cũ, dây xích kim loại và nhiều bức ảnh của các anh hùng Việt Nam. Nó rất nổi tiếng vì kể câu chuyện về cách người dân Việt Nam đấu tranh giành tự do. Tôi thích nơi này vì nó rất cảm động và giúp tôi tìm hiểu về lịch sử.",
                 colorClass: "bg-[#ff9600]", icon: "fa-building-columns"
             },
             {
@@ -369,9 +397,7 @@
 
         // Tối ưu giọng đọc AI 
         function setupVoices() {
-            // Kiểm tra xem trình duyệt có hỗ trợ âm thanh không
             if (!('speechSynthesis' in window)) return; 
-            
             try {
                 let voices = window.speechSynthesis.getVoices();
                 if (voices.length > 0) {
@@ -395,39 +421,32 @@
             
             let completedLessons = [];
             try {
-                // Khắc phục lỗi nếu Zalo chặn LocalStorage
                 completedLessons = JSON.parse(localStorage.getItem('b1Completed')) || [];
             } catch (e) {
                 console.warn("Không thể truy cập bộ nhớ, bỏ qua lưu bài.");
             }
             
-            // Đường uốn lượn zigzag cho map
             const offsets = ['translate-x-0', 'translate-x-6', 'translate-x-12', 'translate-x-6', 'translate-x-0', '-translate-x-6', '-translate-x-12', '-translate-x-6'];
 
             lessonsData.forEach((lesson, index) => {
                 const isCompleted = completedLessons.includes(lesson.id);
                 const transformClass = offsets[index % 8];
                 
-                // Container bọc ngoài cùng chiếm trọn chiều ngang
                 const nodeWrapper = document.createElement('div');
                 nodeWrapper.className = `flex justify-center mb-8 w-full`;
                 
-                // Container nhóm Nút tròn + Nhãn tên để cùng di chuyển zigzag
                 const itemGroup = document.createElement('div');
                 itemGroup.className = `flex flex-col items-center transform transition-transform ${transformClass}`;
                 
-                // Tạo nút bấm tròn (Bài học)
                 const btn = document.createElement('div');
                 btn.className = `lesson-node ${lesson.colorClass} ${isCompleted ? 'node-completed' : ''} shadow-md`;
                 btn.innerHTML = `<i class="fa-solid ${lesson.icon}"></i>`;
                 btn.onclick = () => openLesson(index);
                 
-                // Tạo nhãn tên hiển thị Topic
                 const titleBadge = document.createElement('div');
                 titleBadge.className = `mt-2 px-3 py-1 bg-white rounded-full text-[12px] sm:text-[13px] font-bold text-gray-500 border-2 border-gray-200 shadow-sm whitespace-nowrap`;
                 titleBadge.innerText = lesson.title;
                 
-                // Gắn vào giao diện
                 itemGroup.appendChild(btn);
                 itemGroup.appendChild(titleBadge);
                 nodeWrapper.appendChild(itemGroup);
@@ -439,13 +458,12 @@
             currentLessonIndex = index;
             const lesson = lessonsData[index];
             
-            // Render View 1: Đọc & Nghe
+            // --- VIEW 1: ĐỌC & NGHE ---
             document.getElementById('lesson-title').innerText = lesson.title;
             document.getElementById('lesson-prompts').innerHTML = lesson.prompts;
             document.getElementById('lesson-vietnamese').innerHTML = lesson.vietnamese;
             document.getElementById('lesson-vietnamese').classList.add('hidden');
             
-            // Tách từ để click nghe từng từ
             const words = lesson.english.split(' ');
             const englishContainer = document.getElementById('lesson-english');
             englishContainer.innerHTML = '';
@@ -454,13 +472,38 @@
                 const span = document.createElement('span');
                 span.innerText = word;
                 span.className = 'cursor-pointer hover:bg-blue-100 hover:text-blue-600 rounded px-1 transition-colors active:scale-110 active:bg-blue-200';
-                span.onclick = () => speakWord(word);
+                span.onclick = (e) => speakWord(word, e);
                 englishContainer.appendChild(span);
             });
 
-            // Chuẩn bị View 2: Luyện câu
-            // Tách đoạn văn thành các câu dựa vào dấu chấm
-            practiceSentences = lesson.english.split('.').map(s => s.trim()).filter(s => s.length > 0);
+            // --- CHIA NHỎ CÂU (Cho View 2 & 3) ---
+            // Tách Tiếng Anh theo dấu chấm
+            const enSents = lesson.english.split('.').map(s => s.trim()).filter(s => s.length > 0);
+            
+            // Tách Tiếng Việt: Loại bỏ các gạch đầu dòng, thay <br> bằng chấm để cắt cho chuẩn
+            let rawVn = lesson.vietnamese.replace(/<br>/g, '.');
+            let vnSents = rawVn.split('.').map(s => s.trim().replace(/^-\s*[^:]+:\s*/, '')).filter(s => s.length > 0);
+
+            // --- VIEW 2: HỌC NHANH ---
+            const quickLearnBox = document.getElementById('quick-learn-content');
+            quickLearnBox.innerHTML = '';
+            enSents.forEach((en, i) => {
+                const vn = vnSents[i] || "...";
+                // Escape text for onclick
+                const escapedEn = en.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                quickLearnBox.innerHTML += `
+                    <div class="bg-white border-2 border-gray-200 p-3 sm:p-4 rounded-xl shadow-sm relative">
+                        <button onclick="speakSentence('${escapedEn}')" class="absolute top-3 right-3 text-[#1cb0f6] w-8 h-8 flex items-center justify-center rounded-full hover:bg-blue-50 active:scale-90 transition-transform bg-gray-50 border border-gray-100">
+                            <i class="fa-solid fa-volume-high text-sm"></i>
+                        </button>
+                        <div class="pr-8 text-gray-800 font-bold mb-2 text-sm sm:text-base leading-relaxed">${en}.</div>
+                        <div class="text-gray-500 text-[13px] sm:text-sm border-t-2 border-dashed border-gray-100 pt-2 leading-relaxed">${vn}</div>
+                    </div>
+                `;
+            });
+
+            // --- VIEW 3: LUYỆN CÂU ---
+            practiceSentences = enSents; // Dùng chung mảng câu đã tách
             currentSentenceIndex = 0;
             preparePracticeSentence();
 
@@ -478,7 +521,6 @@
         // --- HỆ THỐNG CẢNH BÁO TRÌNH DUYỆT ---
         function checkInAppBrowser() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
-            // Kiểm tra Zalo, Facebook, Instagram
             if (ua.includes("Zalo") || ua.includes("FBAN") || ua.includes("FBAV") || ua.includes("Instagram")) {
                 const modal = document.getElementById('browser-warning-modal');
                 const content = document.getElementById('warning-content');
@@ -514,33 +556,32 @@
         }
 
         function switchTab(tabId) {
-            const viewLearn = document.getElementById('view-learn');
-            const viewPractice = document.getElementById('view-practice');
-            const tabLearnBtn = document.getElementById('tab-learn');
-            const tabPracticeBtn = document.getElementById('tab-practice');
+            const views = ['learn', 'quick', 'practice'];
+            
+            views.forEach(id => {
+                const view = document.getElementById(`view-${id}`);
+                const btn = document.getElementById(`tab-${id}`);
+                
+                if (id === tabId) {
+                    view.classList.remove('hidden');
+                    if(id === 'practice') view.classList.add('flex');
+                    btn.className = "px-3 sm:px-4 py-1.5 rounded-lg font-bold text-[12px] sm:text-sm bg-white shadow text-[#1cb0f6] transition-colors whitespace-nowrap";
+                } else {
+                    view.classList.add('hidden');
+                    if(id === 'practice') view.classList.remove('flex');
+                    btn.className = "px-3 sm:px-4 py-1.5 rounded-lg font-bold text-[12px] sm:text-sm text-gray-400 hover:text-gray-600 transition-colors whitespace-nowrap bg-transparent";
+                }
+            });
+            
             const btnComplete = document.getElementById('btn-complete');
             const btnCheck = document.getElementById('btn-check');
-
-            if(tabId === 'learn') {
-                viewLearn.classList.remove('hidden');
-                viewPractice.classList.add('hidden');
-                viewPractice.classList.remove('flex');
-                
-                tabLearnBtn.className = "px-4 py-1.5 rounded-lg font-bold text-sm sm:text-base bg-white shadow text-[#1cb0f6] transition-colors";
-                tabPracticeBtn.className = "px-4 py-1.5 rounded-lg font-bold text-sm sm:text-base text-gray-400 hover:text-gray-600 transition-colors";
-                
-                btnComplete.classList.remove('hidden');
-                btnCheck.classList.add('hidden');
-            } else {
-                viewLearn.classList.add('hidden');
-                viewPractice.classList.remove('hidden');
-                viewPractice.classList.add('flex');
-
-                tabPracticeBtn.className = "px-4 py-1.5 rounded-lg font-bold text-sm sm:text-base bg-white shadow text-[#1cb0f6] transition-colors";
-                tabLearnBtn.className = "px-4 py-1.5 rounded-lg font-bold text-sm sm:text-base text-gray-400 hover:text-gray-600 transition-colors";
-                
+            
+            if(tabId === 'practice') {
                 btnComplete.classList.add('hidden');
                 btnCheck.classList.remove('hidden');
+            } else {
+                btnComplete.classList.remove('hidden');
+                btnCheck.classList.add('hidden');
             }
         }
 
@@ -553,15 +594,95 @@
             }
         }
 
-        function speakWord(wordText) {
-            if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            const cleanWord = wordText.replace(/[.,;!?]/g, '');
-            const utterance = new SpeechSynthesisUtterance(cleanWord);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.9;
-            if(selectedVoice) utterance.voice = selectedVoice;
-            window.speechSynthesis.speak(utterance);
+        // TỪ ĐIỂN TỰ ĐỘNG - Gồm 200+ từ vựng
+        const wordDictionary = {
+            "i": "tôi", "want": "muốn", "to": "để/đến", "talk": "nói", "about": "về", "a": "một", "trip": "chuyến đi", 
+            "hanoi": "Hà Nội", "zoo": "sở thú", "went": "đã đi", "there": "ở đó", "by": "bằng", "motorbike": "xe máy", 
+            "with": "với", "my": "của tôi", "friends": "bạn bè", "spent": "đã dành", "day": "ngày", "walking": "đi dạo", 
+            "around": "xung quanh", "see": "nhìn", "many": "nhiều", "different": "khác nhau", "species": "loài", 
+            "really": "thực sự", "enjoyed": "đã thích", "taking": "chụp", "photos": "ảnh", "monkeys": "khỉ", 
+            "tigers": "hổ", "liked": "đã thích", "this": "này", "because": "bởi vì", "seeing": "nhìn thấy", 
+            "real": "thật", "animals": "động vật", "is": "là", "very": "rất", "interesting": "thú vị", "it": "nó", 
+            "was": "đã là", "relaxing": "thư giãn", "and": "và", "meaningful": "ý nghĩa", "for": "cho", "me": "tôi",
+            "her": "của cô ấy", "name": "tên", "new": "mới", "student": "sinh viên", "in": "trong", "club": "câu lạc bộ", 
+            "met": "đã gặp", "at": "tại", "meeting": "buổi họp", "last": "trước", "week": "tuần", "felt": "cảm thấy", 
+            "she": "cô ấy", "friendly": "thân thiện", "smart": "thông minh", "famous": "nổi tiếng", "that": "rằng/đó", 
+            "love": "yêu", "robotic": "rô-bốt", "cat": "mèo", "his": "của anh ấy", "funny": "hài hước", "adventures": "phiêu lưu", 
+            "think": "nghĩ", "entertaining": "giải trí", "creative": "sáng tạo", "characters": "nhân vật", "the": "cái/con", 
+            "story": "câu chuyện", "great": "tuyệt vời", "way": "cách", "relax": "thư giãn", "after": "sau khi", 
+            "studying": "việc học", "recently": "gần đây", "received": "nhận được", "shirt": "áo sơ mi", "as": "như là", 
+            "present": "món quà", "mother": "mẹ", "gave": "đã cho/tặng", "happy": "vui vẻ", "when": "khi", "color": "màu sắc", 
+            "design": "thiết kế", "often": "thường xuyên", "wear": "mặc", "go": "đi", "out": "ra ngoài", "market": "chợ", 
+            "walked": "đã đi bộ", "bought": "đã mua", "some": "một vài", "fresh": "tươi", "fruit": "trái cây", "cheap": "rẻ", 
+            "so": "vì vậy", "feel": "cảm thấy", "t-shirt": "áo phông", "clothing": "quần áo", "shop": "cửa hàng", 
+            "town": "thị trấn", "center": "trung tâm", "comfortable": "thoải mái", "hangout": "đi chơi", "product": "sản phẩm", 
+            "buy": "mua", "milk": "sữa", "made": "được làm", "vietnam": "Việt Nam", "company": "công ty", "makes": "làm ra", 
+            "healthy": "tốt sức khỏe", "delicious": "ngon miệng", "drink": "uống", "every": "mỗi", "good": "tốt", 
+            "health": "sức khỏe", "website": "trang web", "watch": "xem", "english": "Tiếng Anh", "learning": "học", 
+            "videos": "video", "rap": "nhạc rap", "music": "âm nhạc", "like": "thích", "free": "miễn phí", "helpful": "hữu ích", 
+            "prison": "nhà tù", "place": "nơi", "you": "bạn", "can": "có thể", "old": "cũ", "rooms": "căn phòng", 
+            "metal": "kim loại", "chains": "dây xích", "vietnamese": "người Việt", "heroes": "anh hùng", "from": "từ", 
+            "past": "quá khứ", "tells": "kể", "how": "cách", "people": "người dân", "fought": "đấu tranh", 
+            "freedom": "tự do", "moving": "cảm động", "helps": "giúp", "learn": "tìm hiểu", "countrys": "của đất nước", 
+            "history": "lịch sử", "popular": "phổ biến", "online": "trực tuyến", "game": "trò chơi", "team": "đội", 
+            "battle": "chiến đấu", "players": "người chơi", "work": "làm việc", "together": "cùng nhau", "defeat": "đánh bại", 
+            "other": "khác", "exciting": "hứng thú", "fun": "vui vẻ", "play": "chơi", "time": "thời gian", "extreme": "khắc nghiệt", 
+            "weather": "thời tiết", "heavy": "lớn", "storm": "cơn bão", "strong": "mạnh", "wind": "gió", "happened": "xảy ra", 
+            "summer": "mùa hè", "stayed": "đã ở", "home": "nhà", "studied": "đã học", "math": "Toán", "country": "đất nước", 
+            "would": "sẽ", "live": "sống", "australia": "Úc", "kangaroos": "chuột túi", "beautiful": "xinh đẹp", 
+            "beaches": "bãi biển", "environment": "môi trường", "clean": "sạch sẽ", "person": "người", "meet": "gặp", 
+            "rapper": "ca sĩ rap", "ask": "hỏi", "him": "anh ấy", "advice": "lời khuyên", "on": "về", "following": "theo đuổi", 
+            "dreams": "ước mơ", "songs": "bài hát", "thing": "thứ", "won": "đã trúng", "lot": "nhiều", "money": "tiền", 
+            "use": "sử dụng", "traveling": "du lịch", "going": "đi", "school": "trường học", "convenient": "tiện lợi", 
+            "save": "tiết kiệm", "enjoy": "thích thú", "riding": "lái", "park": "công viên", "hometown": "quê hương", 
+            "do": "làm/tập", "exercise": "thể dục", "or": "hoặc", "chat": "trò chuyện", "has": "có", "lots": "nhiều", 
+            "green": "xanh", "trees": "cây", "small": "nhỏ", "lake": "hồ", "event": "sự kiện", "important": "quan trọng", 
+            "birthday": "sinh nhật", "year": "năm", "celebrated": "tổ chức", "family": "gia đình", "nice": "tốt đẹp", 
+            "wishes": "lời chúc", "gifts": "quà tặng"
+        };
+
+        let tooltipTimeout;
+
+        function speakWord(wordText, event) {
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const cleanWord = wordText.replace(/[.,;!?]/g, '').toLowerCase();
+                    const utterance = new SpeechSynthesisUtterance(cleanWord);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.9;
+                    if(selectedVoice) utterance.voice = selectedVoice;
+                    window.speechSynthesis.speak(utterance);
+
+                    // Logic hiện Popup Dịch nghĩa CHÍNH XÁC ở ngón tay bấm
+                    if (event) {
+                        const tooltip = document.getElementById('word-tooltip');
+                        const tooltipText = document.getElementById('tooltip-text');
+                        
+                        // Lấy vị trí phần tử app (để trừ hao offset nếu có cuộn/căn giữa)
+                        const containerRect = document.querySelector('.app-container').getBoundingClientRect();
+                        const rect = event.target.getBoundingClientRect();
+                        
+                        const meaning = wordDictionary[cleanWord] || "Từ vựng";
+                        tooltipText.innerText = meaning;
+                        
+                        // Định vị Tooltip bằng cách trừ đi offset của khung app
+                        tooltip.style.left = (rect.left - containerRect.left + rect.width / 2) + 'px';
+                        tooltip.style.top = (rect.top - containerRect.top) + 'px';
+                        
+                        tooltip.classList.remove('hidden');
+                        setTimeout(() => tooltip.classList.remove('opacity-0'), 10);
+                        
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = setTimeout(() => {
+                            tooltip.classList.add('opacity-0');
+                            setTimeout(() => tooltip.classList.add('hidden'), 200);
+                        }, 2500);
+                    }
+                }
+            } catch (e) {
+                console.log("Audio not supported");
+            }
         }
 
         function speakFull() {
@@ -575,11 +696,22 @@
             window.speechSynthesis.speak(utterance);
         }
 
+        function speakSentence(text) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85; 
+            if(selectedVoice) utterance.voice = selectedVoice;
+            window.speechSynthesis.speak(utterance);
+        }
+
         // --- HỆ THỐNG LUYỆN CÂU ---
         function preparePracticeSentence() {
             if (currentSentenceIndex >= practiceSentences.length) {
                 document.getElementById('practice-word-bank').innerHTML = `<div class="text-green-500 font-bold text-xl"><i class="fa-solid fa-check-circle"></i> Tuyệt vời! Bạn đã hoàn thành!</div>`;
                 document.getElementById('practice-answer-box').innerHTML = '';
+                document.getElementById('practice-feedback').classList.add('scale-0');
                 document.getElementById('btn-check').classList.add('hidden');
                 document.getElementById('btn-complete').classList.remove('hidden');
                 return;
@@ -587,13 +719,18 @@
 
             document.getElementById('practice-progress').innerText = `${currentSentenceIndex + 1}/${practiceSentences.length}`;
             
+            const feedback = document.getElementById('practice-feedback');
+            feedback.classList.remove('scale-100');
+            feedback.classList.add('scale-0');
+            
+            const box = document.getElementById('practice-answer-box');
+            box.classList.remove('bg-green-50', 'border-green-400', 'p-2', 'rounded-xl');
+            
             const sentence = practiceSentences[currentSentenceIndex];
-            // Xóa dấu câu để so sánh dễ dàng hơn
             correctAnswer = sentence.replace(/[.,;!?]/g, ''); 
             
             const words = correctAnswer.split(' ');
             
-            // Xáo trộn mảng từ
             shuffledBank = [...words].sort(() => Math.random() - 0.5);
             userAnswerBank = [];
 
@@ -616,13 +753,12 @@
                     return `<div class="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-100 border-2 border-transparent rounded-xl text-transparent text-sm sm:text-base">_</div>`;
                 }
                 return `
-                    <div onclick="addPracticeWord(${idx})" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-700 cursor-pointer shadow-sm btn-3d active:translate-y-1 active:border-b-0 border-b-4 hover:bg-gray-50 pb-[4px] sm:pb-[6px] text-sm sm:text-base">
+                    <div onclick="addPracticeWord(${idx}, event)" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-700 cursor-pointer shadow-sm btn-3d active:translate-y-1 active:border-b-0 border-b-4 hover:bg-gray-50 pb-[4px] sm:pb-[6px] text-sm sm:text-base">
                         ${word}
                     </div>
                 `;
             }).join('');
 
-            // Bật tắt nút check
             if(userAnswerBank.length > 0) {
                 btnCheck.disabled = false;
                 btnCheck.className = "w-full py-3 sm:py-4 rounded-2xl bg-[#58cc02] text-white font-black text-base sm:text-lg btn-3d hover:brightness-110 active:border-b-0 active:translate-y-[4px]";
@@ -632,21 +768,21 @@
             }
         }
 
-        function addPracticeWord(idx) {
+        function addPracticeWord(idx, event) {
             if(shuffledBank[idx] === null) return;
             const word = shuffledBank[idx];
             userAnswerBank.push({word: word, originalIdx: idx});
-            shuffledBank[idx] = null; // Tạo khoảng trống
+            shuffledBank[idx] = null; 
             
-            // Đọc từ khi bấm chọn
-            speakWord(word);
+            // Đọc và hiện nghĩa ngay lúc luyện
+            speakWord(word, event);
             
             renderPracticeUI();
         }
 
         function removePracticeWord(userAnswerIdx) {
             const item = userAnswerBank[userAnswerIdx];
-            shuffledBank[item.originalIdx] = item.word; // Trả về vị trí cũ
+            shuffledBank[item.originalIdx] = item.word; 
             userAnswerBank.splice(userAnswerIdx, 1);
             renderPracticeUI();
         }
@@ -656,16 +792,33 @@
             const correctStr = correctAnswer.toLowerCase();
 
             if (userStr === correctStr) {
-                // ĐÚNG
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(correctAnswer);
-                    utterance.lang = 'en-US';
-                    utterance.rate = 0.9;
-                    if(selectedVoice) utterance.voice = selectedVoice;
-                    window.speechSynthesis.speak(utterance);
-                }
+                try {
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                        
+                        const viUtterance = new SpeechSynthesisUtterance("Đúng rồi đó");
+                        viUtterance.lang = 'vi-VN';
+                        viUtterance.rate = 1.0;
+                        window.speechSynthesis.speak(viUtterance);
+
+                        const enUtterance = new SpeechSynthesisUtterance(correctAnswer);
+                        enUtterance.lang = 'en-US';
+                        enUtterance.rate = 0.9;
+                        if(selectedVoice) enUtterance.voice = selectedVoice;
+                        
+                        viUtterance.onend = () => { window.speechSynthesis.speak(enUtterance); };
+                        setTimeout(() => { if(!window.speechSynthesis.speaking) window.speechSynthesis.speak(enUtterance); }, 1200);
+                    }
+                } catch(e) {}
                 
-                // Đổi nút check thành chuyển câu tiếp theo
+                const box = document.getElementById('practice-answer-box');
+                box.classList.add('bg-green-50', 'border-green-400', 'p-2', 'rounded-xl');
+                
+                const feedback = document.getElementById('practice-feedback');
+                feedback.innerHTML = `<span class="text-[#58cc02] animate-bounce drop-shadow-sm"><i class="fa-solid fa-circle-check mr-2"></i>Chính xác! Đúng rồi đó!</span>`;
+                feedback.classList.remove('scale-0');
+                feedback.classList.add('scale-100'); 
+                
                 const btnCheck = document.getElementById('btn-check');
                 btnCheck.innerText = "TIẾP TỤC";
                 btnCheck.onclick = () => {
@@ -675,10 +828,8 @@
                     btnCheck.onclick = checkPractice;
                 }
             } else {
-                // SAI
                 const box = document.getElementById('practice-answer-box');
                 box.classList.add('border-red-500', 'bg-red-50');
-                // Hiệu ứng rung
                 box.style.transform = "translateX(-5px)";
                 setTimeout(() => box.style.transform = "translateX(5px)", 100);
                 setTimeout(() => box.style.transform = "translateX(-5px)", 200);
@@ -713,7 +864,6 @@
             renderMap();
         }
 
-        // Khởi tạo ứng dụng với vòng vây an toàn
         window.onload = () => {
             try { checkInAppBrowser(); } catch (e) {}
             try { setupVoices(); } catch (e) {}
