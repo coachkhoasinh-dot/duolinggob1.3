@@ -828,6 +828,16 @@
                     btnCheck.onclick = checkPractice;
                 }
             } else {
+                try {
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
+                        const viWrongUtterance = new SpeechSynthesisUtterance("Sai rồi đồ ngốc");
+                        viWrongUtterance.lang = 'vi-VN';
+                        viWrongUtterance.rate = 1.0;
+                        window.speechSynthesis.speak(viWrongUtterance);
+                    }
+                } catch(e) {}
+                
                 const box = document.getElementById('practice-answer-box');
                 box.classList.add('border-red-500', 'bg-red-50');
                 box.style.transform = "translateX(-5px)";
