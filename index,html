@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Duolingo Style Speaking B1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f7f7f7;
+            touch-action: pan-y; /* Cho phép cuộn trên mobile, chống zoom */
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Nút bấm 3D phong cách Duolingo */
+        .btn-3d {
+            transition: all 0.1s;
+            border-bottom-width: 4px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-3d:active {
+            border-bottom-width: 0px;
+            transform: translateY(4px);
+            margin-bottom: 4px; /* Bù đắp không gian bị mất khi viền thu nhỏ */
+        }
+
+        .btn-green {
+            background-color: #58cc02;
+            border-color: #58a700;
+            color: white;
+        }
+        
+        .btn-blue {
+            background-color: #1cb0f6;
+            border-color: #1899d6;
+            color: white;
+        }
+
+        /* Nút bài học trên bản đồ */
+        .lesson-node {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            border-bottom-width: 6px;
+            cursor: pointer;
+            transition: all 0.1s;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .lesson-node:active {
+            border-bottom-width: 0px;
+            transform: translateY(6px);
+        }
+
+        /* Các màu bài học */
+        .node-color-1 { background-color: #58cc02; border-color: #58a700; color: white; }
+        .node-color-2 { background-color: #ce82ff; border-color: #a568cc; color: white; }
+        .node-color-3 { background-color: #1cb0f6; border-color: #1899d6; color: white; }
+        .node-color-4 { background-color: #ff4b4b; border-color: #cc3c3c; color: white; }
+        .node-color-5 { background-color: #ffc800; border-color: #cc9c00; color: white; }
+
+        .node-completed::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background-color: #ffc800;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hiệu ứng mượt cho từ vựng */
+        .word-span {
+            transition: background-color 0.1s, transform 0.1s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        /* Ẩn thanh cuộn nhưng vẫn cuộn được */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container flex flex-col">
+        
+        <!-- Header -->
+        <header class="sticky top-0 bg-white z-50 px-4 py-3 border-b-2 border-gray-200 flex justify-between items-center">
+            <div class="flex items-center text-gray-400 font-bold text-xl">
+                <i class="fa-solid fa-flag text-[#58cc02] mr-2"></i> B1.3
+            </div>
+            <div class="flex space-x-4 font-bold">
+                <div class="text-[#ffc800] flex items-center">
+                    <i class="fa-solid fa-fire mr-1"></i> <span id="streak-count">1</span>
+                </div>
+                <div class="text-[#ff4b4b] flex items-center">
+                    <i class="fa-solid fa-heart mr-1"></i> <span>5</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Bản đồ bài học (Map) -->
+        <div class="flex-grow overflow-y-auto pb-24 pt-6 px-4 bg-[#f7f7f7]" id="map-container">
+            <!-- Nội dung map sẽ được render bằng JS -->
+        </div>
+
+        <!-- Modal Bài học (Khởi đầu bị ẩn) -->
+        <div id="lesson-modal" class="fixed inset-0 bg-white z-[100] flex flex-col hidden transition-transform transform translate-y-full duration-300">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b-2 border-gray-200">
+                <button onclick="closeLesson()" class="text-gray-400 hover:text-gray-600 text-2xl px-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="flex-grow mx-4 h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-[#58cc02] w-1/2 rounded-full"></div>
+                </div>
+                <div class="text-gray-400 font-bold"><i class="fa-solid fa-heart text-[#ff4b4b]"></i></div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex px-4 pt-2 space-x-2 border-b-2 border-gray-100 shrink-0">
+                <button id="tab-learn" onclick="switchTab('learn')" class="flex-1 py-3 font-bold text-center border-b-4 border-[#1cb0f6] text-[#1cb0f6] text-sm uppercase tracking-wide transition-all">Đọc & Nghe</button>
+                <button id="tab-practice" onclick="switchTab('practice')" class="flex-1 py-3 font-bold text-center border-b-4 border-transparent text-gray-400 hover:text-gray-600 text-sm uppercase tracking-wide transition-all"><i class="fa-solid fa-dumbbell mr-1"></i> Luyện Câu</button>
+            </div>
+
+            <!-- Modal Content (Wrapped in Learn View) -->
+            <div class="flex-grow overflow-y-auto p-4 flex flex-col relative" id="modal-content-container">
+                
+                <!-- VIEW 1: ĐỌC & NGHE -->
+                <div id="view-learn" class="flex flex-col h-full">
+                    <h2 class="text-2xl font-black text-gray-800 mb-2" id="lesson-title">Chủ đề</h2>
+                    
+                    <!-- Gợi ý / Câu hỏi -->
+                    <div id="lesson-prompts" class="mb-4 text-gray-500 text-[15px] font-bold"></div>
+                    
+                    <div class="flex items-start w-full">
+                        <!-- Nhân vật cú Duolingo (mô phỏng) -->
+                        <div class="w-16 h-16 bg-[#58cc02] rounded-full flex items-center justify-center flex-shrink-0 border-b-4 border-[#58a700] mr-3 mt-4">
+                            <i class="fa-solid fa-kiwi-bird text-white text-3xl"></i>
+                        </div>
+                        
+                        <!-- Khung hội thoại -->
+                        <div class="bg-white border-2 border-gray-200 rounded-2xl p-4 relative flex-grow shadow-sm">
+                            <!-- Tam giác chỉ vào cú -->
+                            <div class="absolute w-4 h-4 bg-white border-l-2 border-b-2 border-gray-200 transform -rotate-45 -left-[10px] top-8"></div>
+                            
+                            <div class="text-xs text-[#1cb0f6] font-bold mb-3 flex items-center bg-blue-50 w-fit px-2 py-1 rounded-lg">
+                                <i class="fa-solid fa-hand-pointer mr-2 animate-bounce"></i> Chạm vào từ bất kỳ để nghe
+                            </div>
+                            
+                            <div id="lesson-english" class="text-xl leading-relaxed text-gray-800 font-bold mb-4 flex flex-wrap gap-x-1 gap-y-1">
+                                <!-- Render english text with spans -->
+                            </div>
+
+                            <!-- Buttons for Audio -->
+                            <div class="flex space-x-3 mt-4 pt-4 border-t-2 border-gray-100">
+                                <button onclick="speakFull()" class="w-12 h-12 rounded-full bg-[#1cb0f6] text-white flex items-center justify-center text-xl btn-3d shadow-sm hover:brightness-110 active:border-b-0 active:translate-y-[4px]">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                                <button onclick="toggleTranslation()" class="flex-grow rounded-2xl bg-gray-100 text-gray-500 font-bold uppercase tracking-wide btn-3d border-b-4 border-gray-300 flex items-center justify-center text-sm hover:bg-gray-200">
+                                    <i class="fa-solid fa-language mr-2 text-lg"></i> Dịch nghĩa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dịch tiếng Việt (ẩn/hiện) -->
+                <div id="lesson-vietnamese" class="mt-6 p-4 bg-blue-50 rounded-2xl text-blue-800 font-semibold text-lg hidden border-2 border-blue-100">
+                    <!-- Bản dịch -->
+                </div>
+                </div> <!-- End VIEW 1 -->
+
+                <!-- VIEW 2: LUYỆN TẬP CÂU -->
+                <div id="view-practice" class="hidden flex-col h-full">
+                    <!-- Header của phần luyện tập -->
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-gray-500 font-bold text-sm uppercase" id="practice-progress-text">Câu 1/5</span>
+                        <div class="flex-grow mx-4 h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div id="practice-progress-bar" class="h-full bg-[#58cc02] w-0 transition-all duration-500"></div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fa-solid fa-pen-to-square text-[#1cb0f6] mr-2"></i> Sắp xếp thành câu đúng:
+                    </h3>
+                    
+                    <!-- Khung chứa từ được chọn -->
+                    <div id="practice-answer-box" class="min-h-[80px] border-b-4 border-gray-200 mb-8 flex flex-wrap gap-2 pb-3 content-start">
+                        <!-- Các từ đã chọn sẽ nằm ở đây -->
+                    </div>
+
+                    <!-- Khung chứa từ để chọn -->
+                    <div id="practice-word-bank" class="flex flex-wrap gap-3 justify-center mt-auto mb-4">
+                        <!-- Các từ ngẫu nhiên sẽ nằm ở đây -->
+                    </div>
+                    
+                    <!-- Thông báo đúng/sai -->
+                    <div id="practice-feedback" class="hidden rounded-xl p-4 mt-auto mb-4 font-bold text-lg text-center transition-all">
+                        Tuyệt vời! <i class="fa-solid fa-check-circle"></i>
+                    </div>
+                    
+                    <!-- Nút Check Luyện Tập -->
+                    <div class="mt-auto pt-4 shrink-0">
+                        <button id="btn-check-practice" onclick="checkPracticeSentence()" class="w-full py-4 rounded-2xl text-lg font-bold btn-3d bg-gray-200 text-gray-400 border-b-4 border-gray-300 flex items-center justify-center transition-all pointer-events-none">
+                            KIỂM TRA
+                        </button>
+                    </div>
+                </div> <!-- End VIEW 2 -->
+
+            </div>
+
+            <!-- Modal Footer (Chỉ hiện ở View Đọc & Nghe) -->
+            <div id="footer-learn" class="p-4 border-t-2 border-gray-200 bg-white sticky bottom-0 shrink-0">
+                <button onclick="completeLesson()" class="w-full py-4 rounded-2xl text-lg btn-3d btn-green flex items-center justify-center shadow-sm">
+                    HOÀN THÀNH BÀI HỌC <i class="fa-solid fa-check ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dữ liệu nội dung học đã được gộp theo yêu cầu Part 2 T.A B1.3
+        const lessonsData = [
+            {
+                id: 1, colorClass: 'node-color-1', icon: 'fa-hippo',
+                title: "Topic 1 & 20",
+                prompts: ["Describe a place you visited recently.", "Describe a trip to the zoo you had recently."],
+                english: "I want to talk about a trip to Hanoi Zoo. I went there by motorbike with my friends. I spent a day walking around the zoo to see many different species. I really enjoyed taking photos of monkeys and tigers there. I liked this trip because seeing real animals is very interesting. It was a very relaxing and meaningful trip for me.",
+                vietnamese: "Tôi muốn nói về chuyến đi đến Sở thú Hà Nội. Tôi đã đến đó bằng xe máy với những người bạn. Tôi đã dành một ngày đi dạo quanh sở thú để xem nhiều loài khác nhau. Tôi thực sự thích việc chụp ảnh những chú khỉ và hổ ở đó. Tôi thích chuyến đi này vì được tận mắt nhìn thấy các loài động vật rất thú vị Đó là một chuyến đi rất thư giãn và ý nghĩa đối với tôi."
+            },
+            {
+                id: 2, colorClass: 'node-color-2', icon: 'fa-user-group',
+                title: "Topic 3",
+                prompts: ["Who that person is", "When and where you met that person", "What you felt about that person"],
+                english: "Her name is Thu, a new student in my club. I met her at a club meeting last week. I felt she was very friendly and smart.",
+                vietnamese: "Tên cô ấy là Thu, một sinh viên mới trong câu lạc bộ của tôi. Tôi gặp cô ấy tại buổi họp câu lạc bộ tuần trước. Tôi thấy cô ấy rất thân thiện và thông minh."
+            },
+            {
+                id: 3, colorClass: 'node-color-3', icon: 'fa-tv',
+                title: "Topic 2, 4 & 6",
+                prompts: ["Describe a book you read.", "Describe a TV program.", "Describe a movie."],
+                english: "I want to talk about 'Doraemon'. It is a very famous comic that I really love. It is about a robotic cat and his funny adventures with his friends Nobita and Shizuka. I think it is very entertaining and creative. I love the characters and the story. It is a great way for me to relax after studying.",
+                vietnamese: "Tôi muốn nói về 'Doraemon'. Đó là một bộ truyện rất nổi tiếng mà tôi thực sự yêu thích. Nó nói về một chú mèo máy và những cuộc phiêu lưu hài hước cùng bạn bè là Nobita, Shizuka... Tôi nghĩ nó rất giải trí và sáng tạo. Tôi yêu các nhân vật và cốt truyện. Đó là một cách tuyệt vời để tôi thư giãn sau khi học."
+            },
+            {
+                id: 4, colorClass: 'node-color-4', icon: 'fa-gift',
+                title: "Topic 5",
+                prompts: ["Describe a present you received recently."],
+                english: "I recently received a shirt as a present. My mother gave it to me. I felt very happy when I received it because I really liked its color and design. I often wear it when I go out with my friends.",
+                vietnamese: "Gần đây tôi nhận được một chiếc áo làm quà tặng. Mẹ tôi đã tặng nó cho tôi. Tôi cảm thấy rất vui khi nhận được vì tôi rất thích màu sắc và kiểu dáng của nó. Tôi thường mặc nó khi đi chơi cùng bạn bè."
+            },
+            {
+                id: 5, colorClass: 'node-color-5', icon: 'fa-store',
+                title: "Topic 7",
+                prompts: ["Where the market was", "How you went there", "What you bought in the market"],
+                english: "The market was in Yen Khanh. I walked there. I bought some fresh fruit and a new shirt very cheap so I feel relaxed and happy.",
+                vietnamese: "Chợ ở Yên Khánh. Tôi đi bộ đến đó. Tôi đã mua một ít trái cây tươi và một chiếc áo mới rất rẻ nên tôi cảm thấy thư giãn và vui vẻ."
+            },
+            {
+                id: 6, colorClass: 'node-color-1', icon: 'fa-shirt',
+                title: "Topic 8",
+                prompts: ["What you bought", "Where you bought it", "Why you bought it"],
+                english: "I bought a new T-shirt. I bought it at a clothing shop in the town center. I bought it because I liked the color and the design; it is very comfortable to wear to hangout.",
+                vietnamese: "Tôi vừa mua một chiếc áo phông mới. Tôi mua nó tại một cửa hàng quần áo ở trung tâm thị trấn. Tôi mua vì tôi thích màu sắc và kiểu dáng của nó; nó rất thoải mái để mặc đi chơi."
+            },
+            {
+                id: 7, colorClass: 'node-color-2', icon: 'fa-bottle-droplet',
+                title: "Topic 9",
+                prompts: ["Describe a famous product that you often buy."],
+                english: "I often buy Vinamilk milk. It is made in Vietnam. The company that makes it is Vinamilk. It is famous because the milk is healthy and delicious. I drink it every day because it is good for my health.",
+                vietnamese: "Tôi thường mua sữa Vinamilk. Nó được sản xuất tại Việt Nam. Công ty sản xuất là Vinamilk. Nó nổi tiếng vì sữa rất tốt cho sức khỏe và thơm ngon. Tôi uống nó mỗi ngày vì nó có lợi cho sức khỏe."
+            },
+            {
+                id: 8, colorClass: 'node-color-4', icon: 'fa-youtube',
+                title: "Topic 10",
+                prompts: ["What the name of the website is", "What you often see", "What you like about it"],
+                english: "The website is YouTube. I often watch English learning videos and rap music videos of Den Vau. I like it because it is free and very helpful.",
+                vietnamese: "Trang web là YouTube. Tôi thường xem video học tiếng Anh và video nhạc rap của Đen Vâu. Tôi thích vì nó miễn phí và rất hữu ích."
+            },
+            {
+                id: 9, colorClass: 'node-color-3', icon: 'fa-building-columns',
+                title: "Topic 11 & 13",
+                prompts: ["Describe a famous historic site.", "Describe a famous museum."],
+                english: "I want to talk about Hoa Lo Prison in Hanoi. At this place, you can see old rooms, metal chains, and many photos of Vietnamese heroes from the past. It is very famous because it tells the story of how Vietnamese people fought for freedom. I like this place because it is very moving and helps me learn about my country's history.",
+                vietnamese: "Tôi muốn nói về nhà tù Hỏa Lò ở Hà Nội. Tại nơi này, bạn có thể nhìn thấy những căn phòng cũ, dây xích sắt, và nhiều hình ảnh của các anh hùng Việt Nam trong quá khứ. Nó rất nổi tiếng vì kể lại câu chuyện người Việt Nam đấu tranh giành tự do. Tôi thích nơi này vì nó rất xúc động và giúp tôi tìm hiểu về lịch sử đất nước."
+            },
+            {
+                id: 10, colorClass: 'node-color-5', icon: 'fa-gamepad',
+                title: "Topic 12",
+                prompts: ["Describe a popular online game."],
+                english: "The name of the game is Lien Quan Mobile. It is a team battle game. Players work together to defeat the other team. It is very popular because it is exciting and fun to play with friends. I often play it in my free time.",
+                vietnamese: "Tên trò chơi là Liên Quân Mobile. Đây là một trò chơi chiến đấu đồng đội. Người chơi làm việc cùng nhau để đánh bại đội khác. Nó rất phổ biến vì thú vị và vui khi chơi cùng bạn bè. Tôi thường chơi nó vào thời gian rảnh."
+            },
+            {
+                id: 11, colorClass: 'node-color-1', icon: 'fa-cloud-bolt',
+                title: "Topic 14",
+                prompts: ["What type of extreme weather", "When it was", "What you did"],
+                english: "It was a very heavy storm with strong wind. It happened last summer. I stayed at home and studied Math.",
+                vietnamese: "Đó là một cơn bão rất lớn với gió mạnh. Nó xảy ra vào mùa hè năm ngoái. Tôi ở nhà và học Toán."
+            },
+            {
+                id: 12, colorClass: 'node-color-2', icon: 'fa-earth-oceania',
+                title: "Topic 15",
+                prompts: ["Which country it is", "What it is famous for", "Why you want to live there"],
+                english: "I would like to live in Australia. It is famous for kangaroos and beautiful beaches. Because the environment is clean and great.",
+                vietnamese: "Tôi muốn sống ở Úc. Nổi tiếng với chuột túi và những bãi biển đẹp. Vì môi trường sạch sẽ và tuyệt vời."
+            },
+            {
+                id: 13, colorClass: 'node-color-3', icon: 'fa-microphone-lines',
+                title: "Topic 16",
+                prompts: ["Who that person is", "What you would ask", "Why you want to meet"],
+                english: "I would like to meet Den Vau. He is a famous rapper in Vietnam. I would ask him for advice on following my dreams. Because I really love his songs.",
+                vietnamese: "Tôi muốn gặp đó là Đen Vâu. Anh ấy là một rapper nổi tiếng ở Việt Nam. Tôi sẽ hỏi anh ấy lời khuyên để theo đuổi ước mơ. Vì tôi rất thích các bài hát của anh ấy."
+            },
+            {
+                id: 14, colorClass: 'node-color-4', icon: 'fa-motorcycle',
+                title: "Topic 17",
+                prompts: ["What thing it is", "What you would use it for", "Why you want to buy it"],
+                english: "I would buy a new motorbike. I would use it for traveling and going to school. Because it is convenient and can help me save time. I also enjoy riding a motorbike.",
+                vietnamese: "Tôi sẽ mua một chiếc xe máy mới. Tôi sẽ dùng nó để đi du lịch và đến trường. Vì nó tiện lợi và giúp tôi tiết kiệm thời gian. Tôi cũng thích đi xe máy."
+            },
+            {
+                id: 15, colorClass: 'node-color-5', icon: 'fa-tree',
+                title: "Topic 18",
+                prompts: ["Where the park is", "What people can do", "Why it is popular"],
+                english: "The park is in the center of Yen Khanh, Ninh Binh. People can walk, do exercise, or chat with friends. It is popular because it has lots of green trees and a small lake.",
+                vietnamese: "Công viên ở trung tâm Yên Khánh, Ninh Bình. Mọi người có thể đi dạo, tập thể dục hoặc trò chuyện với bạn bè. Nó phổ biến vì có nhiều cây xanh và một hồ nước nhỏ."
+            },
+            {
+                id: 16, colorClass: 'node-color-1', icon: 'fa-cake-candles',
+                title: "Topic 19",
+                prompts: ["Describe an event that was important to you."],
+                english: "My birthday was an important event for me. It happened last year. I celebrated it with my family and friends. It was important because I had a great time with the people I love. I felt very happy and received many nice wishes and gifts.",
+                vietnamese: "Sinh nhật của tôi là một sự kiện quan trọng đối với tôi. Nó diễn ra vào năm ngoái. Tôi đã tổ chức cùng gia đình và bạn bè. Nó quan trọng vì tôi đã có khoảng thời gian tuyệt vời bên những người tôi yêu quý. Tôi cảm thấy rất vui và nhận được nhiều lời chúc cùng quà tặng ý nghĩa."
+            }
+        ];
+
+        let currentLessonObj = null;
+        const synth = window.speechSynthesis;
+
+        // --- CÁC BIẾN CHO TÍNH NĂNG LUYỆN CÂU ---
+        let practiceSentences = [];
+        let currentPracticeIndex = 0;
+        let originalWords = [];
+        let shuffledBank = [];
+        let userAnswerBank = [];
+
+        // Chuyển đổi giữa Tab Đọc và Tab Luyện Tập
+        function switchTab(tab) {
+            synth.cancel(); // Dừng đọc
+            const btnLearn = document.getElementById('tab-learn');
+            const btnPractice = document.getElementById('tab-practice');
+            const viewLearn = document.getElementById('view-learn');
+            const viewPractice = document.getElementById('view-practice');
+            const footerLearn = document.getElementById('footer-learn');
+
+            if (tab === 'learn') {
+                btnLearn.className = "flex-1 py-3 font-bold text-center border-b-4 border-[#1cb0f6] text-[#1cb0f6] text-sm uppercase tracking-wide transition-all";
+                btnPractice.className = "flex-1 py-3 font-bold text-center border-b-4 border-transparent text-gray-400 hover:text-gray-600 text-sm uppercase tracking-wide transition-all";
+                viewLearn.classList.remove('hidden');
+                viewLearn.classList.add('flex');
+                viewPractice.classList.add('hidden');
+                viewPractice.classList.remove('flex');
+                footerLearn.classList.remove('hidden');
+            } else {
+                btnPractice.className = "flex-1 py-3 font-bold text-center border-b-4 border-[#1cb0f6] text-[#1cb0f6] text-sm uppercase tracking-wide transition-all";
+                btnLearn.className = "flex-1 py-3 font-bold text-center border-b-4 border-transparent text-gray-400 hover:text-gray-600 text-sm uppercase tracking-wide transition-all";
+                viewPractice.classList.remove('hidden');
+                viewPractice.classList.add('flex');
+                viewLearn.classList.add('hidden');
+                viewLearn.classList.remove('flex');
+                footerLearn.classList.add('hidden');
+                initPractice();
+            }
+        }
+
+        // Khởi tạo dữ liệu câu hỏi từ đoạn văn
+        function initPractice() {
+            if (!currentLessonObj) return;
+            
+            // Tách đoạn văn thành các câu dựa vào dấu câu
+            let rawSentences = currentLessonObj.english.match(/[^.?!]+[.?!]+/g);
+            if (!rawSentences) {
+                rawSentences = [currentLessonObj.english];
+            }
+            
+            // Lọc các câu có ý nghĩa (dài hơn 3 từ)
+            practiceSentences = rawSentences.map(s => s.trim()).filter(s => s.split(' ').length > 3);
+            if (practiceSentences.length === 0) practiceSentences = [currentLessonObj.english];
+            
+            currentPracticeIndex = 0;
+            loadPracticeSentence();
+        }
+
+        function loadPracticeSentence() {
+            // Nếu làm xong hết các câu
+            if (currentPracticeIndex >= practiceSentences.length) {
+                document.getElementById('practice-word-bank').innerHTML = '';
+                document.getElementById('practice-answer-box').innerHTML = '<div class="w-full text-center text-[#58cc02] font-black text-2xl mt-4 animate-bounce">Bạn đã luyện tập xong! 🎉</div>';
+                
+                const btnCheck = document.getElementById('btn-check-practice');
+                btnCheck.innerText = 'TRỞ VỀ BÀI HỌC';
+                btnCheck.className = "w-full py-4 rounded-2xl text-lg font-bold btn-3d btn-green flex items-center justify-center transition-all pointer-events-auto mt-auto";
+                btnCheck.onclick = () => switchTab('learn');
+                
+                document.getElementById('practice-feedback').classList.add('hidden');
+                document.getElementById('practice-progress-bar').style.width = '100%';
+                document.getElementById('practice-progress-text').innerText = 'Hoàn thành';
+                return;
+            }
+
+            const sentence = practiceSentences[currentPracticeIndex];
+            
+            // Tách từ và loại bỏ dấu câu dính kèm
+            originalWords = sentence.split(/\s+/).map(w => w.replace(/[.,!?;:()"]/g, '')).filter(w => w.length > 0);
+            
+            userAnswerBank = [];
+            // Trộn từ ngẫu nhiên
+            shuffledBank = [...originalWords].sort(() => Math.random() - 0.5);
+
+            // Cập nhật UI thanh tiến trình
+            document.getElementById('practice-progress-text').innerText = `Câu ${currentPracticeIndex + 1}/${practiceSentences.length}`;
+            document.getElementById('practice-progress-bar').style.width = `${(currentPracticeIndex / practiceSentences.length) * 100}%`;
+            document.getElementById('practice-feedback').classList.add('hidden');
+            
+            const btnCheck = document.getElementById('btn-check-practice');
+            btnCheck.innerText = 'KIỂM TRA';
+            btnCheck.onclick = checkPracticeSentence;
+
+            renderPracticeUI();
+        }
+
+        function renderPracticeUI() {
+            const answerBox = document.getElementById('practice-answer-box');
+            const wordBank = document.getElementById('practice-word-bank');
+
+            // Render khu vực câu trả lời (các từ đã chọn)
+            answerBox.innerHTML = userAnswerBank.map((wordObj, idx) => `
+                <div onclick="removePracticeWord(${idx})" class="px-4 py-2 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-700 cursor-pointer shadow-sm hover:bg-gray-50 active:scale-95 transition-transform">
+                    ${wordObj.word}
+                </div>
+            `).join('');
+
+            // Render kho từ vựng trộn xộn
+            wordBank.innerHTML = shuffledBank.map((word, idx) => {
+                if (word === null) {
+                    return `<div class="px-4 py-2 bg-gray-100 border-2 border-transparent rounded-xl text-transparent">_</div>`;
+                }
+                return `
+                    <div onclick="addPracticeWord(${idx})" class="px-4 py-2 bg-white border-2 border-gray-300 rounded-xl font-bold text-gray-700 cursor-pointer shadow-sm btn-3d active:translate-y-1 active:border-b-0 border-b-4 hover:bg-gray-50 pb-[6px]">
+                        ${word}
+                    </div>
+                `;
+            }).join('');
+
+            // Bật/tắt nút kiểm tra
+            const btnCheck = document.getElementById('btn-check-practice');
+            if (userAnswerBank.length === originalWords.length && originalWords.length > 0) {
+                btnCheck.className = "w-full py-4 rounded-2xl text-lg font-bold btn-3d btn-green flex items-center justify-center shadow-sm transition-all pointer-events-auto mt-auto";
+            } else {
+                btnCheck.className = "w-full py-4 rounded-2xl text-lg font-bold btn-3d bg-gray-200 text-gray-400 border-b-4 border-gray-300 flex items-center justify-center transition-all pointer-events-none mt-auto";
+            }
+        }
+
+        function addPracticeWord(idx) {
+            const word = shuffledBank[idx];
+            if (word === null) return;
+            
+            // Đẩy vào mảng chọn
+            userAnswerBank.push({ word: word, originalIdx: idx });
+            // Xóa ở kho từ
+            shuffledBank[idx] = null;
+            
+            renderPracticeUI();
+            speakWord(word); // Đọc từ khi bấm
+        }
+
+        function removePracticeWord(idx) {
+            const wordObj = userAnswerBank[idx];
+            // Trả về kho từ
+            shuffledBank[wordObj.originalIdx] = wordObj.word;
+            // Xóa khỏi mảng chọn
+            userAnswerBank.splice(idx, 1);
+            renderPracticeUI();
+        }
+
+        function checkPracticeSentence() {
+            const btnCheck = document.getElementById('btn-check-practice');
+            
+            // Nếu đang ở trạng thái chuyển câu
+            if (btnCheck.innerText === 'TIẾP TỤC') {
+                currentPracticeIndex++;
+                loadPracticeSentence();
+                return;
+            }
+
+            // Kiểm tra đáp án (bỏ qua viết hoa viết thường)
+            const userSentence = userAnswerBank.map(w => w.word).join(' ').toLowerCase();
+            const correctSentence = originalWords.join(' ').toLowerCase();
+            
+            const feedback = document.getElementById('practice-feedback');
+            feedback.classList.remove('hidden');
+
+            if (userSentence === correctSentence) {
+                // Trả lời ĐÚNG
+                feedback.className = "rounded-xl p-4 mt-auto mb-4 font-bold text-lg text-center bg-[#d7ffb8] text-[#58a700] border-2 border-[#58cc02]";
+                feedback.innerHTML = 'Tuyệt vời! Chính xác! <i class="fa-solid fa-circle-check ml-1 text-xl"></i>';
+                
+                btnCheck.innerText = 'TIẾP TỤC';
+                btnCheck.className = "w-full py-4 rounded-2xl text-lg font-bold btn-3d btn-blue flex items-center justify-center shadow-sm pointer-events-auto mt-auto";
+                
+                // Đọc lại cả câu đúng
+                const utter = new SpeechSynthesisUtterance(originalWords.join(' '));
+                setupVoice(utter, 0.9);
+                synth.speak(utter);
+            } else {
+                // Trả lời SAI
+                feedback.className = "rounded-xl p-4 mt-auto mb-4 font-bold text-lg text-center bg-[#ffdfe0] text-[#ea2b2b] border-2 border-[#ff4b4b] animate-shake";
+                feedback.innerHTML = 'Chưa đúng, hãy sắp xếp lại! <i class="fa-solid fa-circle-xmark ml-1 text-xl"></i>';
+                
+                const box = document.getElementById('practice-answer-box');
+                box.classList.add('animate-shake');
+                setTimeout(() => box.classList.remove('animate-shake'), 300);
+
+                // Trả lại toàn bộ từ
+                userAnswerBank.forEach(w => {
+                    shuffledBank[w.originalIdx] = w.word;
+                });
+                userAnswerBank = [];
+                renderPracticeUI();
+            }
+        }
+
+        // Khởi tạo Map
+        function renderMap() {
+            const container = document.getElementById('map-container');
+            container.innerHTML = '';
+            
+            // Lấy tiến trình đã lưu
+            const completedLessons = JSON.parse(localStorage.getItem('b1Completed')) || [];
+            
+            // Để tạo hiệu ứng đường đi ngoằn ngoèo (zigzag)
+            const margins = ['ml-0', 'ml-12', 'ml-24', 'ml-12']; 
+
+            lessonsData.forEach((lesson, index) => {
+                const isCompleted = completedLessons.includes(lesson.id);
+                const marginClass = margins[index % 4];
+                
+                // Vùng chứa node để căn giữa + lệch
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = `flex justify-center mb-8 w-full ${marginClass}`;
+                
+                // Tạo Node
+                const btn = document.createElement('div');
+                // TẤT CẢ ĐỀU ĐƯỢC MỞ KHÓA (không kiểm tra khóa)
+                btn.className = `lesson-node ${lesson.colorClass} ${isCompleted ? 'node-completed' : ''} shadow-md`;
+                btn.innerHTML = `<i class="fa-solid ${lesson.icon}"></i>`;
+                btn.onclick = () => openLesson(lesson.id);
+
+                // Thêm một chút mô tả nhỏ bên dưới nút
+                const label = document.createElement('div');
+                label.className = "absolute -bottom-6 whitespace-nowrap text-[13px] font-bold text-gray-500";
+                label.innerText = `Bài ${lesson.id}`;
+
+                btn.appendChild(label);
+                nodeWrapper.appendChild(btn);
+                container.appendChild(nodeWrapper);
+            });
+            
+            // Cập nhật streak (giả lập)
+            document.getElementById('streak-count').innerText = completedLessons.length;
+        }
+
+        function openLesson(id) {
+            currentLessonObj = lessonsData.find(l => l.id === id);
+            if(!currentLessonObj) return;
+
+            // Đổ dữ liệu
+            document.getElementById('lesson-title').innerText = currentLessonObj.title;
+            
+            const promptsHtml = currentLessonObj.prompts.map(p => `<li>• ${p}</li>`).join('');
+            document.getElementById('lesson-prompts').innerHTML = `<ul class="list-none">${promptsHtml}</ul>`;
+            
+            // Xử lý Text-to-speech kiểu Cambridge: Tách từng từ, giữ nguyên dấu câu để hiển thị nhưng bắt sự kiện click
+            const words = currentLessonObj.english.split(/(\s+)/); // Tách giữ lại khoảng trắng để format đẹp
+            let formattedHtml = '';
+            
+            words.forEach(wordToken => {
+                if(wordToken.trim() === '') {
+                    formattedHtml += wordToken; // Giữ khoảng trắng
+                } else {
+                    // Tạo span cho mỗi từ. Hover: đổi màu. Active: nhún 3D.
+                    formattedHtml += `<span onclick="speakWord('${wordToken.replace(/'/g, "\\'")}')" 
+                                        class="cursor-pointer word-span hover:bg-blue-100 hover:text-blue-600 active:bg-blue-300 active:scale-110 active:-translate-y-1 inline-block rounded px-[2px]">${wordToken}</span>`;
+                }
+            });
+
+            document.getElementById('lesson-english').innerHTML = formattedHtml;
+            document.getElementById('lesson-vietnamese').innerHTML = currentLessonObj.vietnamese;
+            document.getElementById('lesson-vietnamese').classList.add('hidden'); // Mặc định ẩn dịch
+
+            // Reset Tab về Đọc & Nghe
+            switchTab('learn');
+
+            // Hiển thị modal với animation trượt lên
+            const modal = document.getElementById('lesson-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('translate-y-full');
+            }, 10);
+        }
+
+        function closeLesson() {
+            synth.cancel(); // Dừng đọc
+            const modal = document.getElementById('lesson-modal');
+            modal.classList.add('translate-y-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function toggleTranslation() {
+            const viDiv = document.getElementById('lesson-vietnamese');
+            viDiv.classList.toggle('hidden');
+        }
+
+        // Đọc từng từ (Kiểu Cambridge)
+        function speakWord(rawWord) {
+            synth.cancel(); // Dừng mọi thứ đang đọc
+            
+            // Loại bỏ dấu câu đính kèm (dấu phẩy, chấm, hỏi...) để đọc cho chuẩn
+            const cleanWord = rawWord.replace(/[.,!?;:()]/g, '').trim();
+            if(!cleanWord) return;
+
+            const utter = new SpeechSynthesisUtterance(cleanWord);
+            setupVoice(utter, 0.8); // Đọc chậm một chút để nghe rõ phát âm
+            synth.speak(utter);
+        }
+
+        // Đọc cả bài
+        function speakFull() {
+            synth.cancel();
+            if(!currentLessonObj) return;
+            const utter = new SpeechSynthesisUtterance(currentLessonObj.english);
+            setupVoice(utter, 0.95); // Đọc tốc độ bình thường
+            synth.speak(utter);
+        }
+
+        // Cài đặt giọng đọc ưu tiên Tiếng Anh
+        function setupVoice(utterance, rate) {
+            utterance.rate = rate;
+            utterance.pitch = 1.0;
+            const voices = synth.getVoices();
+            // Cố gắng tìm giọng US hoặc UK
+            const engVoice = voices.find(v => v.lang === 'en-US' || v.lang === 'en-GB') 
+                          || voices.find(v => v.lang.startsWith('en'));
+            if(engVoice) utterance.voice = engVoice;
+        }
+
+        function completeLesson() {
+            synth.cancel();
+            
+            // Lưu tiến trình
+            let completed = JSON.parse(localStorage.getItem('b1Completed')) || [];
+            if(!completed.includes(currentLessonObj.id)) {
+                completed.push(currentLessonObj.id);
+                localStorage.setItem('b1Completed', JSON.stringify(completed));
+            }
+            
+            closeLesson();
+            // Đợi tắt modal rồi render lại map
+            setTimeout(() => {
+                renderMap();
+                // Scroll tới vị trí hiện tại (tuỳ chọn)
+            }, 300);
+        }
+
+        // Cần thiết để load voice trên một số trình duyệt (đặc biệt Chrome/Safari)
+        speechSynthesis.onvoiceschanged = () => {
+            // Giọng đọc đã sẵn sàng
+        };
+
+        // Khởi động
+        window.onload = renderMap;
+    </script>
+</body>
+</html>
